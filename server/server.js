@@ -129,9 +129,9 @@ function parseJobCards(html) {
 app.get('/api/jobs/search', async (req, res) => {
   try {
     const {
-      keywords = 'Software Engineer',
-      location = 'United States',
-      seconds = '86400',
+      keywords = 'IT Manager, Digital Transformation',
+      location = 'Belgium',
+      seconds = '3600',
       sortBy = 'DD',
       workType = '',
       expLevel = '',

@@ -10,11 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Application State
   const state = {
-    keywords: 'Software Engineer',
-    location: 'United States',
+    keywords: 'IT Manager, Digital Transformation',
+    location: 'Belgium',
     seconds: 3600, // 1 hour default
     sortBy: 'DD',  // Date Descending default
-    workType: '',  // Any
+    workType: '',  // Any workplace
     expLevels: [],
     easyApply: false,
     autoPoll: false,
@@ -691,21 +691,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return [
       {
         id: '1',
-        name: 'Senior Frontend < 1h',
-        keywords: 'Senior Frontend Engineer',
-        location: 'United States',
+        name: 'IT Manager Belgium < 1h',
+        keywords: 'IT Manager, Digital Transformation',
+        location: 'Belgium',
         seconds: 3600,
-        workType: '2',
+        workType: '',
         sortBy: 'DD',
-        expLevels: ['4'],
+        expLevels: ['4', '5'],
         easyApply: false
       },
       {
         id: '2',
-        name: 'AI / LLM Engineer < 30m',
-        keywords: 'AI Engineer OR LLM',
-        location: 'San Francisco Bay Area',
-        seconds: 1800,
+        name: 'Digital Transformation Lead < 2h',
+        keywords: 'Digital Transformation Lead OR Manager',
+        location: 'Belgium',
+        seconds: 7200,
         workType: '',
         sortBy: 'DD',
         expLevels: [],
@@ -713,13 +713,13 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       {
         id: '3',
-        name: 'Remote Fullstack < 2h',
-        keywords: 'Fullstack Engineer',
-        location: 'Remote',
-        seconds: 7200,
+        name: 'Remote IT Director < 4h',
+        keywords: 'IT Director OR Head of IT',
+        location: 'Belgium',
+        seconds: 14400,
         workType: '2',
         sortBy: 'DD',
-        expLevels: ['3', '4'],
+        expLevels: ['5', '6'],
         easyApply: false
       }
     ];
