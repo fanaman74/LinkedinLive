@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   el.saveSearchBtn.addEventListener('click', () => {
-    saveCurrentSearch();
+    openEditModal(null);
   });
 
   // Watchlist drawer toggle
@@ -281,10 +281,22 @@ document.addEventListener('DOMContentLoaded', () => {
     el.savedDrawer.classList.add('hidden');
   });
 
-  el.savedDrawer.addEventListener('click', (e) => {
-    if (e.target === el.savedDrawer) {
+  // Drawer panel stop propagation & robust overlay dismiss
+  const drawerPanel = el.savedDrawer.querySelector('.drawer-panel');
+  if (drawerPanel) {
+    drawerPanel.addEventListener('click', (e) => e.stopPropagation());
+    drawerPanel.addEventListener('mousedown', (e) => e.stopPropagation());
+  }
+
+  let drawerMouseDownTarget = null;
+  el.savedDrawer.addEventListener('mousedown', (e) => {
+    drawerMouseDownTarget = e.target;
+  });
+  el.savedDrawer.addEventListener('mouseup', (e) => {
+    if (drawerMouseDownTarget === el.savedDrawer && e.target === el.savedDrawer) {
       el.savedDrawer.classList.add('hidden');
     }
+    drawerMouseDownTarget = null;
   });
 
   // =========================================================================
@@ -334,6 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let modalSelectedExpLevels = [];
 
   function openEditModal(preset = null) {
+    // Hide drawer to avoid double-overlay conflicts
+    el.savedDrawer.classList.add('hidden');
+
     if (preset) {
       el.editModalTitle.textContent = 'EDIT SEARCH PRESET';
       el.editPresetId.value = preset.id;
@@ -346,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.editPresetEasyApply.checked = Boolean(preset.easyApply);
       modalSelectedExpLevels = Array.isArray(preset.expLevels) ? [...preset.expLevels] : [];
     } else {
-      el.editModalTitle.textContent = 'CREATE NEW PRESET';
+      el.editModalTitle.textContent = 'SAVE TO WATCHLIST';
       el.editPresetId.value = '';
       el.editPresetName.value = `${state.keywords} (< ${Math.round(state.seconds / 60)}m)`;
       el.editPresetKeywords.value = state.keywords;
@@ -370,6 +385,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     el.editPresetModal.classList.remove('hidden');
+
+    // Auto-focus and select all text in the name field so user can type immediately
+    setTimeout(() => {
+      el.editPresetName.focus();
+      el.editPresetName.select();
+    }, 60);
   }
 
   el.closeEditModalBtn.addEventListener('click', () => {
@@ -380,9 +401,35 @@ document.addEventListener('DOMContentLoaded', () => {
     el.editPresetModal.classList.add('hidden');
   });
 
-  el.editPresetModal.addEventListener('click', (e) => {
-    if (e.target === el.editPresetModal) {
+  // Prevent clicks inside modal-panel from bubbling to the overlay backdrop
+  const modalPanel = el.editPresetModal.querySelector('.modal-panel');
+  if (modalPanel) {
+    modalPanel.addEventListener('click', (e) => e.stopPropagation());
+    modalPanel.addEventListener('mousedown', (e) => e.stopPropagation());
+  }
+
+  // Backdrop overlay click tracking: only close if mousedown and mouseup both hit the backdrop
+  let modalMouseDownTarget = null;
+  el.editPresetModal.addEventListener('mousedown', (e) => {
+    modalMouseDownTarget = e.target;
+  });
+  el.editPresetModal.addEventListener('mouseup', (e) => {
+    if (modalMouseDownTarget === el.editPresetModal && e.target === el.editPresetModal) {
       el.editPresetModal.classList.add('hidden');
+    }
+    modalMouseDownTarget = null;
+  });
+
+  // Global Escape key listener to close active overlays
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (!el.editPresetModal.classList.contains('hidden')) {
+        el.editPresetModal.classList.add('hidden');
+      } else if (!el.savedDrawer.classList.contains('hidden')) {
+        el.savedDrawer.classList.add('hidden');
+      } else if (!el.booleanHelperPanel.classList.contains('hidden')) {
+        el.booleanHelperPanel.classList.add('hidden');
+      }
     }
   });
 
