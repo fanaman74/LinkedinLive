@@ -752,6 +752,54 @@ code, .mono-code {
   color: var(--ink);
 }
 
+.limit-selector-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.mono-label-small {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--faint);
+  letter-spacing: 0.06em;
+}
+
+.pills-group-mini {
+  display: inline-flex;
+  background: #050507;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.mini-pill {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mini-pill:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mini-pill.active {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
 /* ==========================================================================
    Action Launchpad
    ========================================================================== */
@@ -1237,6 +1285,78 @@ code, .mono-code {
   font-family: var(--mono);
   font-size: 12px;
   color: var(--dim);
+}
+
+/* ==========================================================================
+   Load More Postings Section
+   ========================================================================== */
+
+.load-more-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.load-more-section.hidden {
+  display: none;
+}
+
+.load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent);
+  color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spinDots 0.6s linear infinite;
+}
+
+.spinner-dot.hidden {
+  display: none;
+}
+
+@keyframes spinDots {
+  to { transform: rotate(360deg); }
+}
+
+.load-more-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
 }
 
 /* ==========================================================================

@@ -79,7 +79,8 @@
         params.append('expLevel', state.expLevels.join(','));
       }
       if (state.easyApply) params.append('easyApply', 'true');
-      if (state.start) params.append('start', String(state.start));
+      if (state.start !== undefined && state.start !== null) params.append('start', String(state.start));
+      if (state.limit) params.append('limit', String(state.limit));
 
       return `${baseUrl}?${params.toString()}`;
     },

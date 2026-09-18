@@ -203,6 +203,15 @@
             <span class="toggle-slider"></span>
             <span class="toggle-text">Live Radar Polling (60s ticker)</span>
           </label>
+
+          <div class="limit-selector-group">
+            <span class="mono-label-small">INITIAL LIMIT:</span>
+            <div class="pills-group-mini" id="batchSizeContainer">
+              <button type="button" class="mini-pill" data-limit="10">10</button>
+              <button type="button" class="mini-pill active" data-limit="25">25</button>
+              <button type="button" class="mini-pill" data-limit="50">50</button>
+            </div>
+          </div>
         </div>
 
         <!-- Primary Action Launchpad -->
@@ -286,6 +295,15 @@
             <h3 class="empty-title">Radar Standing By</h3>
             <p class="empty-text">Click <strong>Run Radar Search</strong> to stream live postings, or <strong>Open in LinkedIn</strong> to view authenticated results directly.</p>
           </div>
+        </div>
+
+        <!-- Load More Section -->
+        <div id="loadMoreSection" class="load-more-section hidden">
+          <button type="button" id="loadMoreBtn" class="load-more-btn">
+            <span id="loadMoreSpinner" class="spinner-dot hidden"></span>
+            <span id="loadMoreText">LOAD MORE POSTINGS (+20)</span>
+          </button>
+          <span id="loadMoreMeta" class="load-more-meta">Showing 25 postings</span>
         </div>
 
         <!-- Loading State -->

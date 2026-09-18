@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     workType: '',  // Any workplace
     expLevels: [],
     easyApply: false,
+    batchLimit: 25,
+    currentOffset: 0,
+    hasMore: true,
+    totalFetched: 0,
+    isLoadingMore: false,
     autoPoll: false,
     autoPollIntervalId: null,
     pollCountdown: 60,
@@ -83,6 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
     metaSort: document.getElementById('metaSort'),
     metaAutoRefresh: document.getElementById('metaAutoRefresh'),
     jobRowsContainer: document.getElementById('jobRowsContainer'),
+    batchSizeContainer: document.getElementById('batchSizeContainer'),
+    loadMoreSection: document.getElementById('loadMoreSection'),
+    loadMoreBtn: document.getElementById('loadMoreBtn'),
+    loadMoreSpinner: document.getElementById('loadMoreSpinner'),
+    loadMoreText: document.getElementById('loadMoreText'),
+    loadMoreMeta: document.getElementById('loadMoreMeta'),
     loadingState: document.getElementById('loadingState'),
     loadingTimeParam: document.getElementById('loadingTimeParam'),
     initialState: document.getElementById('initialState'),
@@ -202,6 +213,25 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Live Radar Polling paused');
     }
   });
+
+  // Batch Limit Pills
+  if (el.batchSizeContainer) {
+    el.batchSizeContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('.mini-pill');
+      if (!btn) return;
+      el.batchSizeContainer.querySelectorAll('.mini-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.batchLimit = parseInt(btn.dataset.limit, 10) || 25;
+      showToast(`Batch limit set to ${state.batchLimit} results`);
+    });
+  }
+
+  // Load More Button
+  if (el.loadMoreBtn) {
+    el.loadMoreBtn.addEventListener('click', () => {
+      loadMoreJobs();
+    });
+  }
 
   // Boolean helper modal
   el.booleanHelperBtn.addEventListener('click', () => {
@@ -524,7 +554,17 @@ document.addEventListener('DOMContentLoaded', () => {
       el.loadingState.classList.remove('hidden');
     }
 
-    const apiUrl = window.URLBuilder.buildApiUrl(state);
+    state.currentOffset = 0;
+    state.totalFetched = 0;
+    if (el.loadMoreSection) {
+      el.loadMoreSection.classList.add('hidden');
+    }
+
+    const apiUrl = window.URLBuilder.buildApiUrl({
+      ...state,
+      start: 0,
+      limit: state.batchLimit
+    });
 
     try {
       const response = await fetch(apiUrl);
@@ -537,8 +577,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      renderJobs(data.jobs, data.directUrl);
-      el.boardCountBadge.textContent = `${data.jobs.length} FOUND`;
+      renderJobs(data.jobs, data.directUrl, false);
+      state.totalFetched = data.jobs.length;
+      state.currentOffset = data.jobs.length;
+      state.hasMore = Boolean(data.hasMore && data.jobs.length >= 10);
+
+      el.boardCountBadge.textContent = `${state.totalFetched} FOUND`;
+
+      if (el.loadMoreSection) {
+        if (state.totalFetched > 0 && state.hasMore) {
+          el.loadMoreSection.classList.remove('hidden');
+          el.loadMoreBtn.disabled = false;
+          el.loadMoreText.textContent = 'LOAD MORE POSTINGS (+20)';
+          el.loadMoreMeta.textContent = `Showing ${state.totalFetched} postings`;
+        } else {
+          el.loadMoreSection.classList.add('hidden');
+        }
+      }
 
       if (isAutoPoll && data.jobs.length > 0) {
         showToast(`Radar update: ${data.jobs.length} jobs in window < ${state.seconds / 60}m`);
@@ -551,29 +606,95 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderJobs(jobs, directUrl) {
-    el.jobRowsContainer.innerHTML = '';
+  async function loadMoreJobs() {
+    if (state.isLoadingMore || !state.hasMore) return;
+    state.isLoadingMore = true;
+
+    if (el.loadMoreSpinner) el.loadMoreSpinner.classList.remove('hidden');
+    if (el.loadMoreBtn) el.loadMoreBtn.disabled = true;
+    if (el.loadMoreText) el.loadMoreText.textContent = 'STREAMING NEXT BATCH...';
+
+    const apiUrl = window.URLBuilder.buildApiUrl({
+      ...state,
+      start: state.currentOffset,
+      limit: 20
+    });
+
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (el.loadMoreSpinner) el.loadMoreSpinner.classList.add('hidden');
+      if (el.loadMoreBtn) el.loadMoreBtn.disabled = false;
+      state.isLoadingMore = false;
+
+      if (!response.ok || !data.success) {
+        showToast(data.error || 'Failed to fetch next batch');
+        return;
+      }
+
+      const newJobs = data.jobs || [];
+      if (newJobs.length === 0) {
+        state.hasMore = false;
+        if (el.loadMoreSection) el.loadMoreSection.classList.add('hidden');
+        showToast(`Reached end of listings (${state.totalFetched} total)`);
+        return;
+      }
+
+      renderJobs(newJobs, data.directUrl, true);
+      state.totalFetched += newJobs.length;
+      state.currentOffset += newJobs.length;
+      state.hasMore = Boolean(data.hasMore && newJobs.length >= 10);
+
+      el.boardCountBadge.textContent = `${state.totalFetched} FOUND`;
+      if (el.loadMoreMeta) {
+        el.loadMoreMeta.textContent = `Showing ${state.totalFetched} postings`;
+      }
+
+      if (state.hasMore) {
+        if (el.loadMoreText) el.loadMoreText.textContent = 'LOAD MORE POSTINGS (+20)';
+      } else {
+        if (el.loadMoreSection) el.loadMoreSection.classList.add('hidden');
+        showToast(`Loaded all ${state.totalFetched} available postings in window`);
+      }
+
+    } catch (err) {
+      console.error('Load more error:', err);
+      if (el.loadMoreSpinner) el.loadMoreSpinner.classList.add('hidden');
+      if (el.loadMoreBtn) el.loadMoreBtn.disabled = false;
+      if (el.loadMoreText) el.loadMoreText.textContent = 'LOAD MORE POSTINGS (+20)';
+      state.isLoadingMore = false;
+      showToast('Network error while streaming more jobs');
+    }
+  }
+
+  function renderJobs(jobs, directUrl, append = false) {
+    if (!append) {
+      el.jobRowsContainer.innerHTML = '';
+    }
 
     if (!jobs || jobs.length === 0) {
-      el.jobRowsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-glyph">
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      if (!append) {
+        el.jobRowsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-glyph">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h3 class="empty-title">Zero Postings in Window (${el.metaTimeWindow.textContent})</h3>
+            <p class="empty-text">No listings were dropped in the last ${Math.round(state.seconds / 60)} minutes for this query. Expand your time window to 2h or 4h, or view broader results on LinkedIn:</p>
+            <a href="${directUrl}" target="_blank" rel="noopener" class="cta-btn secondary-cta" style="margin-top: 14px;">
+              Open on LinkedIn (Browser Search)
+            </a>
           </div>
-          <h3 class="empty-title">Zero Postings in Window (${el.metaTimeWindow.textContent})</h3>
-          <p class="empty-text">No listings were dropped in the last ${Math.round(state.seconds / 60)} minutes for this query. Expand your time window to 2h or 4h, or view broader results on LinkedIn:</p>
-          <a href="${directUrl}" target="_blank" rel="noopener" class="cta-btn secondary-cta" style="margin-top: 14px;">
-            Open on LinkedIn (Browser Search)
-          </a>
-        </div>
-      `;
+        `;
+      }
       return;
     }
 
     jobs.forEach((job, index) => {
       const row = document.createElement('div');
       row.className = 'job-row arrival';
-      row.style.animationDelay = `${index * 50}ms`;
+      row.style.animationDelay = `${(index % 20) * 40}ms`;
 
       const initial = (job.company || 'C').charAt(0).toUpperCase();
 

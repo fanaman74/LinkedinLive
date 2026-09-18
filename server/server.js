@@ -137,10 +137,16 @@ app.get('/api/jobs/search', async (req, res) => {
       expLevel = '',
       jobType = '',
       easyApply = 'false',
-      start = '0'
+      start = '0',
+      limit = '25'
     } = req.query;
 
-    const cacheKey = JSON.stringify({ keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply, start });
+    const baseStart = Math.max(0, parseInt(start, 10) || 0);
+    const targetLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 10), 60);
+    const numPages = Math.ceil(targetLimit / 10);
+    const pageOffsets = Array.from({ length: numPages }, (_, i) => baseStart + i * 10);
+
+    const cacheKey = JSON.stringify({ keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply, baseStart, targetLimit });
     const cached = cache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -150,48 +156,58 @@ app.get('/api/jobs/search', async (req, res) => {
         source: 'cache',
         count: cached.data.length,
         jobs: cached.data,
-        directUrl: cached.directUrl
+        directUrl: cached.directUrl,
+        hasMore: cached.data.length >= 10
       });
     }
 
-    const guestUrl = buildLinkedInGuestUrl({ keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply, start });
     const directUrl = buildLinkedInWebUrl({ keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply });
 
-    console.log(`[LinkedIn Proxy] Requesting: ${guestUrl}`);
+    console.log(`[LinkedIn Proxy] Batch fetching ${numPages} page(s) (start: ${baseStart}, limit: ${targetLimit}) for: "${keywords}" in "${location}"`);
 
-    const response = await fetch(guestUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+    // Fetch pages concurrently
+    const pagePromises = pageOffsets.map(async (st) => {
+      const guestUrl = buildLinkedInGuestUrl({ keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply, start: st });
+      try {
+        const response = await fetch(guestUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (!response.ok) {
+          console.warn(`[LinkedIn Proxy] Offset ${st} returned status ${response.status}`);
+          return '';
+        }
+        return await response.text();
+      } catch (err) {
+        console.warn(`[LinkedIn Proxy] Offset ${st} network error:`, err.message);
+        return '';
       }
     });
 
-    if (!response.ok) {
-      console.warn(`[LinkedIn Proxy] Status ${response.status} from guest endpoint.`);
-      if (response.status === 429) {
-        return res.status(429).json({
-          success: false,
-          error: 'LinkedIn rate-limited guest queries. Please use the Direct LinkedIn URL to view results in your browser.',
-          directUrl
-        });
+    const htmlPages = await Promise.all(pagePromises);
+    const seenIds = new Set();
+    const combinedJobs = [];
+
+    for (const html of htmlPages) {
+      if (!html) continue;
+      const jobs = parseJobCards(html);
+      for (const j of jobs) {
+        if (!seenIds.has(j.id)) {
+          seenIds.add(j.id);
+          combinedJobs.push(j);
+        }
       }
-      return res.status(response.status).json({
-        success: false,
-        error: `LinkedIn returned status ${response.status}`,
-        directUrl
-      });
     }
 
-    const html = await response.text();
-    const jobs = parseJobCards(html);
+    const finalJobs = combinedJobs.slice(0, targetLimit);
+    const hasMore = combinedJobs.length >= 10;
 
-    // Save to cache
-    cache.set(cacheKey, { data: jobs, directUrl, timestamp: Date.now() });
-
-    // Limit cache size to 100 items
+    // Cache results
+    cache.set(cacheKey, { data: finalJobs, directUrl, timestamp: Date.now() });
     if (cache.size > 100) {
       const firstKey = cache.keys().next().value;
       cache.delete(firstKey);
@@ -201,10 +217,11 @@ app.get('/api/jobs/search', async (req, res) => {
       success: true,
       cached: false,
       source: 'live',
-      count: jobs.length,
-      jobs,
+      count: finalJobs.length,
+      jobs: finalJobs,
       directUrl,
-      query: { keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply }
+      hasMore,
+      query: { keywords, location, seconds, sortBy, workType, expLevel, jobType, easyApply, start: baseStart, limit: targetLimit }
     });
 
   } catch (error) {
