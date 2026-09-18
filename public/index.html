@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LinkedIn Radar — Pinloop-Style URL Hacker & Live Job Stream</title>
+  <meta name="description" content="Sub-24h LinkedIn job search webapp. Precision time-window hacking (15m, 1h, 4h), forced date-descending sort, and real-time live feed inspired by Pinloop.ai.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Header / Top Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-badge">HACK-ENGINE</span>
+        <span class="brand-title">LINKEDIN // RADAR</span>
+        <span class="version-tag">v2.5</span>
+      </div>
+
+      <div class="nav-metrics">
+        <div class="status-indicator">
+          <span class="radar-dot"></span>
+          <span class="status-text">RADAR ACTIVE</span>
+        </div>
+        <button id="savedSearchesBtn" class="pill-btn nav-btn" title="View Saved Searches">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span>Watchlist</span>
+          <span id="savedCount" class="counter-badge">0</span>
+        </button>
+        <a href="https://www.reddit.com/r/jobsearchhacks/comments/1jedoz0/linkedin_url_hacking_to_find_jobs_posted_less/" target="_blank" rel="noopener" class="nav-link" title="Read the Reddit URL Hacking technique">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.688-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+          <span>Reddit Origin</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    <!-- Hero Pitch Section with Pinloop Animated Canvas Background -->
+    <section class="hero-section">
+      <!-- Pinloop Atmospheric Dither Canvas -->
+      <canvas id="plane" class="hero-canvas"></canvas>
+      <div class="hero-fade"></div>
+
+      <div class="hero-content">
+        <div class="hero-tag">BEAT THE 100+ APPLICANT CROWD</div>
+        <h1 class="hero-title">Bypass LinkedIn's algorithm.<br>Hunt fresh jobs the minute they drop.</h1>
+        <p class="hero-sub">
+          LinkedIn defaults to showing stale, sponsored listings. Manipulating the <code class="mono-code">f_TPR=r{seconds}</code> parameter and enforcing <code class="mono-code">sortBy=DD</code> reveals openings posted minutes ago — before hundreds apply.
+        </p>
+
+        <!-- Terminal Command Bar (Pinloop aesthetic) -->
+        <div class="terminal-card">
+          <div class="terminal-bar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">cli // generated-query-preview</div>
+            <button id="copyCliBtn" class="terminal-copy-btn" title="Copy CLI Command">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>copy</span>
+            </button>
+          </div>
+          <div class="terminal-content">
+            <span class="terminal-prompt">$</span>
+            <span id="cliCommandText" class="terminal-command">hunt "Software Engineer" --location "United States" --within 1h --recent --remote</span>
+            <span class="terminal-cursor"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search Engine Controls -->
+    <section class="controls-section">
+      <form id="searchForm" class="search-form" onsubmit="return false;">
+        <!-- Core Input Bar -->
+        <div class="search-input-row">
+          <div class="input-group flex-2">
+            <label for="keywordsInput" class="input-label">JOB TITLE OR KEYWORDS</label>
+            <div class="input-field-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="keywordsInput" class="custom-input" placeholder="e.g. Senior Frontend, Staff Engineer, AI/ML" value="Software Engineer" autocomplete="off" />
+              <button type="button" id="booleanHelperBtn" class="helper-pill-btn" title="Boolean Search Query Helper">Boolean Syntax</button>
+            </div>
+          </div>
+
+          <div class="input-group flex-1">
+            <label for="locationInput" class="input-label">LOCATION / REGION</label>
+            <div class="input-field-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <input type="text" id="locationInput" class="custom-input" placeholder="e.g. Remote, United States, London" value="United States" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Boolean Helper Modal / Dropdown -->
+        <div id="booleanHelperPanel" class="boolean-panel hidden">
+          <div class="boolean-header">
+            <span class="mono-label">BOOLEAN SEARCH MATRIX</span>
+            <button type="button" id="closeBooleanBtn" class="close-btn">&times;</button>
+          </div>
+          <div class="boolean-body">
+            <div class="bool-row">
+              <button type="button" class="bool-chip" data-insert='title:("Software Engineer")'>title:("...")</button>
+              <span>Target exact words in job title only</span>
+            </div>
+            <div class="bool-row">
+              <button type="button" class="bool-chip" data-insert='(React OR TypeScript)'>OR operator</button>
+              <span>Match any of these technologies</span>
+            </div>
+            <div class="bool-row">
+              <button type="button" class="bool-chip" data-insert='NOT ("Senior" OR "Lead")'>NOT operator</button>
+              <span>Exclude senior/unwanted titles</span>
+            </div>
+            <div class="bool-row">
+              <button type="button" class="bool-chip" data-insert='"Startup"'>Quotes "..."</button>
+              <span>Match exact phrase only</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Window Hack (f_TPR) Selector -->
+        <div class="filter-block">
+          <div class="filter-header">
+            <span class="filter-title">TIME POSTED HACK (<code class="mono-code">f_TPR=r{seconds}</code>)</span>
+            <span class="filter-hint">LinkedIn native UI only lets you choose "Past 24 hours". Use precision sub-hour hacking:</span>
+          </div>
+
+          <div class="preset-pills-row" id="timePresetsContainer">
+            <button type="button" class="time-pill" data-seconds="900">15 min</button>
+            <button type="button" class="time-pill" data-seconds="1800">30 min</button>
+            <button type="button" class="time-pill active" data-seconds="3600">1 hour</button>
+            <button type="button" class="time-pill" data-seconds="7200">2 hours</button>
+            <button type="button" class="time-pill" data-seconds="14400">4 hours</button>
+            <button type="button" class="time-pill" data-seconds="28800">8 hours</button>
+            <button type="button" class="time-pill" data-seconds="43200">12 hours</button>
+            <button type="button" class="time-pill" data-seconds="86400">24 hours</button>
+            <button type="button" class="time-pill" data-seconds="custom" id="customTimeBtn">Custom...</button>
+          </div>
+
+          <!-- Custom Seconds Slider (Collapsible) -->
+          <div id="customTimeRow" class="custom-time-box hidden">
+            <div class="custom-time-inputs">
+              <label for="customSecondsSlider">Exact Seconds: <strong id="customSecondsDisplay">3600</strong>s (<span id="customHumanDisplay">1.0 hr</span>)</label>
+              <input type="range" id="customSecondsSlider" min="300" max="86400" step="300" value="3600" class="time-slider">
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Filters Row (Workplace, Experience, Sort) -->
+        <div class="advanced-filters-grid">
+          <!-- Workplace / Remote (f_WT) -->
+          <div class="filter-cell">
+            <label class="cell-label">WORKPLACE (<code class="mono-code">f_WT</code>)</label>
+            <div class="pills-group" id="workplaceContainer">
+              <button type="button" class="filter-pill active" data-wt="">Any</button>
+              <button type="button" class="filter-pill" data-wt="2">Remote</button>
+              <button type="button" class="filter-pill" data-wt="3">Hybrid</button>
+              <button type="button" class="filter-pill" data-wt="1">On-site</button>
+            </div>
+          </div>
+
+          <!-- Sort Order (sortBy) -->
+          <div class="filter-cell">
+            <label class="cell-label">SORT ORDER (<code class="mono-code">sortBy</code>)</label>
+            <div class="pills-group" id="sortContainer">
+              <button type="button" class="filter-pill active" data-sort="DD" title="Date Descending (Most Recent First)">Most Recent (DD)</button>
+              <button type="button" class="filter-pill" data-sort="R" title="LinkedIn Relevance AI Algorithm">Relevance</button>
+            </div>
+          </div>
+
+          <!-- Experience Level (f_E) -->
+          <div class="filter-cell span-2">
+            <label class="cell-label">EXPERIENCE LEVEL (<code class="mono-code">f_E</code>)</label>
+            <div class="pills-group" id="experienceContainer">
+              <button type="button" class="filter-pill" data-exp="1">Internship</button>
+              <button type="button" class="filter-pill" data-exp="2">Entry Level</button>
+              <button type="button" class="filter-pill" data-exp="3">Associate</button>
+              <button type="button" class="filter-pill" data-exp="4">Mid-Senior</button>
+              <button type="button" class="filter-pill" data-exp="5">Director</button>
+              <button type="button" class="filter-pill" data-exp="6">Executive</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Toggles (Easy Apply, Auto-refresh) -->
+        <div class="toggles-strip">
+          <label class="toggle-control">
+            <input type="checkbox" id="easyApplyToggle" />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Easy Apply Only (<code class="mono-code">f_AL=true</code>)</span>
+          </label>
+
+          <label class="toggle-control">
+            <input type="checkbox" id="autoPollToggle" />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Live Radar Polling (60s ticker)</span>
+          </label>
+        </div>
+
+        <!-- Primary Action Launchpad -->
+        <div class="action-launchpad">
+          <div class="primary-buttons">
+            <button type="button" id="searchBtn" class="cta-btn primary-cta">
+              <span class="cta-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </span>
+              <span class="cta-label">RUN RADAR SEARCH</span>
+            </button>
+
+            <button type="button" id="openLinkedInBtn" class="cta-btn secondary-cta" title="Open directly on LinkedIn in a new tab">
+              <span class="cta-icon">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.6 1.6 0 0 0 1.6-1.6 1.6 1.6 0 0 0-3.2 0 1.6 1.6 0 0 0 1.6 1.6m1.4 9.74v-8.37H5.06v8.37h2.8z"/></svg>
+              </span>
+              <span class="cta-label">OPEN IN LINKEDIN</span>
+            </button>
+          </div>
+
+          <div class="utility-buttons">
+            <button type="button" id="copyUrlBtn" class="util-pill" title="Copy raw hacked LinkedIn URL">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copyUrlText">Copy URL</span>
+            </button>
+
+            <button type="button" id="blitzBtn" class="util-pill" title="Launch 3 parallel search tabs: 15m, 1h, and 4h">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Multi-Tab Blitz</span>
+            </button>
+
+            <button type="button" id="saveSearchBtn" class="util-pill" title="Save this search configuration">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span>Bookmark</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Generated URL Display Strip -->
+        <div class="generated-url-strip">
+          <span class="url-badge">HACKED LINKEDIN URL</span>
+          <span id="liveGeneratedUrl" class="raw-url">https://www.linkedin.com/jobs/search/?keywords=Software+Engineer&location=United+States&f_TPR=r3600&sortBy=DD</span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Pinloop Live Stream Results Board -->
+    <section class="board-section">
+      <!-- Board Header / Status -->
+      <div class="board-header">
+        <div class="board-meta-left">
+          <div class="pulse-ring"></div>
+          <span class="board-title">STREAM BOARD</span>
+          <span id="boardCountBadge" class="count-badge">READY</span>
+        </div>
+
+        <div class="board-meta-right">
+          <span class="meta-tag" id="metaTimeWindow">WINDOW: &lt; 1 HOUR</span>
+          <span class="meta-tag" id="metaSort">SORT: DD (DATE DESC)</span>
+          <span class="meta-tag" id="metaAutoRefresh">POLL: IDLE</span>
+        </div>
+      </div>
+
+      <!-- Feed Container -->
+      <div class="board-container">
+        <!-- Table Column Headers -->
+        <div class="board-table-header">
+          <div class="col-logo">ORGANIZATION</div>
+          <div class="col-role">JOB TITLE &amp; LOCATION</div>
+          <div class="col-freshness">FRESHNESS</div>
+          <div class="col-action">ACTION</div>
+        </div>
+
+        <!-- Job Rows List -->
+        <div id="jobRowsContainer" class="job-rows-container">
+          <!-- Initial Welcome / Empty State -->
+          <div class="empty-state" id="initialState">
+            <div class="empty-glyph">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3 class="empty-title">Radar Standing By</h3>
+            <p class="empty-text">Click <strong>Run Radar Search</strong> to stream live postings, or <strong>Open in LinkedIn</strong> to view authenticated results directly.</p>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="board-loading hidden">
+          <div class="spinner-line"></div>
+          <span class="loading-label">SCANNING LINKEDIN FREQUENCY (<span id="loadingTimeParam">r3600</span>)...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Educational "How It Works" Section -->
+    <section class="explainer-section">
+      <div class="explainer-card">
+        <h2 class="explainer-title">Why URL Hacking LinkedIn Works</h2>
+        <div class="explainer-grid">
+          <div class="explainer-box">
+            <div class="box-icon">01</div>
+            <h3>The Hidden <code class="mono-code">f_TPR</code> Parameter</h3>
+            <p>LinkedIn's web interface gives only 4 coarse time presets (Any time, Past month, Past week, Past 24 hours). Internally, LinkedIn's search backend computes time via seconds: <code class="mono-code">f_TPR=r3600</code> (1 hour), <code class="mono-code">r1800</code> (30 mins), or <code class="mono-code">r900</code> (15 mins).</p>
+          </div>
+
+          <div class="explainer-box">
+            <div class="box-icon">02</div>
+            <h3>Bypassing Algorithm Bias (<code class="mono-code">sortBy=DD</code>)</h3>
+            <p>By default, LinkedIn sorts by "Relevance" (<code class="mono-code">sortBy=R</code>), promoting sponsored postings and company partners from days ago. Appending <code class="mono-code">sortBy=DD</code> forces exact chronological ordering so true new drops appear first.</p>
+          </div>
+
+          <div class="explainer-box">
+            <div class="box-icon">03</div>
+            <h3>The 1-Hour Golden Window</h3>
+            <p>Most corporate recruiters receive hundreds of applications within 48 hours. By applying within the first 60 minutes, your resume sits on top of the recruiter's inbox before automated filters or candidate caps take effect.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Saved Searches Drawer / Modal with Editing -->
+  <div id="savedDrawer" class="drawer-overlay hidden">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <h3>WATCHLIST MANAGEMENT</h3>
+          <span class="drawer-subtitle">Edit, tune, or export your saved search presets</span>
+        </div>
+        <button type="button" id="closeDrawerBtn" class="close-btn">&times;</button>
+      </div>
+
+      <!-- Watchlist Toolbar -->
+      <div class="drawer-toolbar">
+        <button type="button" id="newPresetBtn" class="drawer-tool-btn primary">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Preset</span>
+        </button>
+        <button type="button" id="exportWatchlistBtn" class="drawer-tool-btn">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export</span>
+        </button>
+        <button type="button" id="importWatchlistBtn" class="drawer-tool-btn">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Import</span>
+        </button>
+        <input type="file" id="importFileInput" accept=".json" style="display: none;" />
+      </div>
+
+      <!-- Watchlist List -->
+      <div id="savedListContainer" class="drawer-content">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Watchlist Edit Modal -->
+  <div id="editPresetModal" class="modal-overlay hidden">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 id="editModalTitle">EDIT SEARCH PRESET</h3>
+        <button type="button" id="closeEditModalBtn" class="close-btn">&times;</button>
+      </div>
+      <form id="editPresetForm" class="modal-form" onsubmit="return false;">
+        <input type="hidden" id="editPresetId" value="" />
+
+        <div class="modal-field">
+          <label for="editPresetName" class="modal-label">PRESET NAME / LABEL</label>
+          <input type="text" id="editPresetName" class="custom-input" placeholder="e.g. Senior Frontend < 1h" required />
+        </div>
+
+        <div class="modal-field">
+          <label for="editPresetKeywords" class="modal-label">KEYWORDS / ROLE</label>
+          <input type="text" id="editPresetKeywords" class="custom-input" placeholder="e.g. Frontend Engineer, React" required />
+        </div>
+
+        <div class="modal-field">
+          <label for="editPresetLocation" class="modal-label">LOCATION</label>
+          <input type="text" id="editPresetLocation" class="custom-input" placeholder="e.g. United States, Remote, London" />
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">TIME WINDOW (<code class="mono-code">f_TPR</code>)</label>
+          <div class="modal-pills-row" id="editTimeContainer">
+            <button type="button" class="time-pill" data-sec="900">15m</button>
+            <button type="button" class="time-pill" data-sec="1800">30m</button>
+            <button type="button" class="time-pill" data-sec="3600">1h</button>
+            <button type="button" class="time-pill" data-sec="7200">2h</button>
+            <button type="button" class="time-pill" data-sec="14400">4h</button>
+            <button type="button" class="time-pill" data-sec="86400">24h</button>
+          </div>
+          <input type="hidden" id="editPresetSeconds" value="3600" />
+        </div>
+
+        <div class="modal-grid-2">
+          <div class="modal-field">
+            <label class="modal-label">WORKPLACE</label>
+            <select id="editPresetWorkType" class="custom-select">
+              <option value="">Any Workplace</option>
+              <option value="2">Remote (f_WT=2)</option>
+              <option value="3">Hybrid (f_WT=3)</option>
+              <option value="1">On-site (f_WT=1)</option>
+            </select>
+          </div>
+
+          <div class="modal-field">
+            <label class="modal-label">SORT ORDER</label>
+            <select id="editPresetSortBy" class="custom-select">
+              <option value="DD">Most Recent (sortBy=DD)</option>
+              <option value="R">Relevance (sortBy=R)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">EXPERIENCE LEVELS (<code class="mono-code">f_E</code>)</label>
+          <div class="modal-pills-row" id="editExpContainer">
+            <button type="button" class="filter-pill" data-exp="1">Intern</button>
+            <button type="button" class="filter-pill" data-exp="2">Entry</button>
+            <button type="button" class="filter-pill" data-exp="3">Associate</button>
+            <button type="button" class="filter-pill" data-exp="4">Mid-Senior</button>
+            <button type="button" class="filter-pill" data-exp="5">Director</button>
+            <button type="button" class="filter-pill" data-exp="6">Exec</button>
+          </div>
+        </div>
+
+        <div class="modal-field" style="margin-top: 6px;">
+          <label class="toggle-control">
+            <input type="checkbox" id="editPresetEasyApply" />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Easy Apply Only (<code class="mono-code">f_AL=true</code>)</span>
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelEditModalBtn" class="saved-btn">Cancel</button>
+          <button type="submit" id="saveEditModalBtn" class="cta-btn primary-cta" style="padding: 9px 20px;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="toast-notification hidden">
+    <span id="toastMessage">Copied to clipboard</span>
+  </div>
+
+  <!-- Script Modules -->
+  <script src="/js/hero-field.js"></script>
+  <script src="/js/url-builder.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
